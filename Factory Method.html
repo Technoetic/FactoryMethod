@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Share Factory - Factory Method Pattern</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.4);
+            --bg-dark: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: radial-gradient(circle at top left, #1e1b4b, #0f172a);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 550px;
+            /* Slightly wider for 3 columns */
+            padding: 2rem;
+            border-radius: 24px;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            text-align: center;
+            font-weight: 800;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+
+        /* Selection Grid */
+        .handler-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .handler-option {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .handler-option:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .handler-option.selected {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .icon {
+            font-size: 1.8rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .label {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        /* Input Area */
+        .input-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        textarea {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1rem;
+            color: white;
+            font-family: inherit;
+            resize: none;
+            height: 100px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Action Button */
+        .share-btn {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: filter 0.2s, transform 0.1s;
+        }
+
+        .share-btn:hover {
+            filter: brightness(1.1);
+        }
+
+        .share-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Console Output */
+        .console {
+            margin-top: 2rem;
+            background: #000;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            color: #4ade80;
+            min-height: 120px;
+            overflow-y: auto;
+            border: 1px solid #333;
+        }
+
+        .log-entry {
+            margin-bottom: 0.5rem;
+            opacity: 0;
+            animation: slideIn 0.3s forwards;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .log-time {
+            color: #666;
+        }
+
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ef4444;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 30px;
+            font-weight: 500;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s, transform 0.3s;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(10px);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="toast" id="toast">Please select a sharing method first!</div>
+
+    <div class="container">
+        <h1>Share Factory</h1>
+        <div class="subtitle">Factory Method Pattern Demo - Social Edition</div>
+
+        <div class="handler-grid" id="grid">
+            <div class="handler-option" data-type="email">
+                <div class="icon">📧</div>
+                <div class="label">Email</div>
+            </div>
+            <div class="handler-option" data-type="sms">
+                <div class="icon">💬</div>
+                <div class="label">SMS</div>
+            </div>
+            <div class="handler-option" data-type="facebook">
+                <div class="icon">📘</div>
+                <div class="label">Facebook</div>
+            </div>
+            <div class="handler-option" data-type="instagram">
+                <div class="icon">📸</div>
+                <div class="label">Instagram</div>
+            </div>
+            <div class="handler-option" data-type="x">
+                <div class="icon">✖️</div>
+                <div class="label">X</div>
+            </div>
+            <div class="handler-option" data-type="linkedin">
+                <div class="icon">💼</div>
+                <div class="label">LinkedIn</div>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <textarea id="message" placeholder="Type your message here..."></textarea>
+        </div>
+
+        <button class="share-btn" id="shareBtn">Generate Handler & Share</button>
+
+        <div class="console" id="console">
+            <!-- Logs will appear here -->
+            <div style="color: #666">// System initialized waiting for factory...</div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. Product Interface (Abstract Base) ---
+        class ShareHandler {
+            share(message) {
+                throw new Error("Method 'share()' must be implemented.");
+            }
+        }
+
+        // --- 2. Concrete Products ---
+        class EmailHandler extends ShareHandler {
+            share(message) {
+                return `Sending <b>Email</b><br/>Content: "${message}"`;
+            }
+        }
+
+        class SMSHandler extends ShareHandler {
+            share(message) {
+                return `Sending <b>SMS</b><br/>Content: "${message}"`;
+            }
+        }
+
+        class FacebookHandler extends ShareHandler {
+            share(message) {
+                return `Posting to <b>Facebook Wall</b><br/>Content: "${message}"`;
+            }
+        }
+
+        class InstagramHandler extends ShareHandler {
+            share(message) {
+                return `Posting to <b>Instagram Feed</b><br/>Caption: "${message}"`;
+            }
+        }
+
+        class XHandler extends ShareHandler {
+            share(message) {
+                return `Tweeting on <b>X</b><br/>Tweet: "${message}"`;
+            }
+        }
+
+        class LinkedInHandler extends ShareHandler {
+            share(message) {
+                return `Posting to <b>LinkedIn</b><br/>Update: "${message}"`;
+            }
+        }
+
+        // --- 3. Creator (Abstract) ---
+        class ShareCreator {
+            // Factory Method
+            createHandler() {
+                throw new Error("Method 'createHandler()' must be implemented.");
+            }
+
+            // Core Business Logic using the Factory Method
+            share(message) {
+                const handler = this.createHandler();
+                log(`Factory: ${this.constructor.name} created ${handler.constructor.name}.`);
+                return handler.share(message);
+            }
+        }
+
+        // --- 4. Concrete Creators ---
+        class EmailCreator extends ShareCreator {
+            createHandler() {
+                return new EmailHandler();
+            }
+        }
+
+        class SMSCreator extends ShareCreator {
+            createHandler() {
+                return new SMSHandler();
+            }
+        }
+
+        class FacebookCreator extends ShareCreator {
+            createHandler() {
+                return new FacebookHandler();
+            }
+        }
+
+        class InstagramCreator extends ShareCreator {
+            createHandler() {
+                return new InstagramHandler();
+            }
+        }
+
+        class XCreator extends ShareCreator {
+            createHandler() {
+                return new XHandler();
+            }
+        }
+
+        class LinkedInCreator extends ShareCreator {
+            createHandler() {
+                return new LinkedInHandler();
+            }
+        }
+
+        // --- 5. Client Code / UI Logic ---
+
+        // Element References
+        const grid = document.getElementById('grid');
+        const options = document.querySelectorAll('.handler-option');
+        const shareBtn = document.getElementById('shareBtn');
+        const consoleDiv = document.getElementById('console');
+        const messageInput = document.getElementById('message');
+        const toast = document.getElementById('toast');
+
+        // Factory Registry
+        const creators = {
+            'email': new EmailCreator(),
+            'sms': new SMSCreator(),
+            'facebook': new FacebookCreator(),
+            'instagram': new InstagramCreator(),
+            'x': new XCreator(),
+            'linkedin': new LinkedInCreator()
+        };
+
+        let selectedType = null;
+
+        // Logger Utility
+        function log(text, isError = false) {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            const time = new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            entry.innerHTML = `
+                <span class="log-time">[${time}]</span>
+                <span style="color: ${isError ? '#ef4444' : '#d1d5db'}">${text}</span>
+            `;
+            consoleDiv.insertBefore(entry, consoleDiv.firstChild);
+        }
+
+        // Selection Logic
+        options.forEach(opt => {
+            opt.addEventListener('click', () => {
+                // UI Toggle
+                options.forEach(o => o.classList.remove('selected'));
+                opt.classList.add('selected');
+
+                // Update State
+                selectedType = opt.dataset.type;
+                log(`User selected: <b>${selectedType.toUpperCase()}</b>`);
+            });
+        });
+
+        // Share Action
+        shareBtn.addEventListener('click', () => {
+            if (!selectedType) {
+                showToast();
+                return;
+            }
+
+            const message = messageInput.value.trim() || "(No content)";
+
+            try {
+                // Client only knows about the Creator interface
+                const creator = creators[selectedType];
+                if (!creator) throw new Error("No creator registered for this type.");
+
+                log(`Client: Requesting share via ${creator.constructor.name}...`);
+
+                // Simulate async process for effect
+                setTimeout(() => {
+                    const result = creator.share(message);
+                    log(`Action: ${result}`);
+                    log("----------------------------------------");
+                }, 400);
+
+            } catch (err) {
+                log(`Error: ${err.message}`, true);
+            }
+        });
+
+        function showToast() {
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+    </script>
+</body>
+
+</html>
